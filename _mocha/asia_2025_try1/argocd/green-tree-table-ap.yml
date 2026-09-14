@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: green-tree-ap
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 471208936033.dkr.ecr.ap-northeast-2.amazonaws.com
+    chart: dynamodb-tables
+    targetRevision: 0.1.0                          
+    helm:
+      values: |
+        tables:
+          - name: green-tree
+            billingMode: PROVISIONED
+            hashKey: treeId
+            hashKeyType: S
+  destination:
+    server: https://8FDDAB59762393E7FA635CCDECB930E3.yl4.ap-northeast-2.eks.amazonaws.com  
+    namespace: dynamodb
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

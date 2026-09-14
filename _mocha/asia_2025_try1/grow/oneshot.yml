@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  grow
+  namespace: green-tree
+  labels:
+    app:  grow
+spec:
+  selector:
+    matchLabels:
+      app: grow
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  grow
+    spec:
+      serviceAccountName: grow
+      containers:
+      - name:  grow
+        image: 471208936033.dkr.ecr.ap-northeast-2.amazonaws.com/grow:v1
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 1
+            memory: 1024Mi
+        ports:
+        - containerPort: 8080
+          name:  grow
+          
+      restartPolicy: Always
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: grow
+  namespace: green-tree
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: grow
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-port: "8080"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=60
+  name: grow
+  namespace: green-tree
+spec:
+  selector:
+    app: grow
+  type: ClusterIP
+  ports:
+  - name: grow
+    protocol: TCP
+    port: 8080
+    targetPort: 8080

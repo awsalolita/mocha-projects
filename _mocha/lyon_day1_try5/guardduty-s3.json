@@ -1,0 +1,77 @@
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Allow GetBucketLocation",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "guardduty.amazonaws.com"
+            },
+            "Action": "s3:GetBucketLocation",
+            "Resource": "arn:aws:s3:::finding-exports-039845098",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "891377138880",
+                    "aws:SourceArn": "arn:aws:guardduty:us-east-1:891377138880:detector/2cd04aab6e8284b2fb06bb739d1a1383"	
+
+                }
+            }
+        },
+        {
+            "Sid": "Allow PutObject",
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "guardduty.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::finding-exports-039845098/*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "891377138880",
+                    "aws:SourceArn": "arn:aws:guardduty:us-east-1:891377138880:detector/2cd04aab6e8284b2fb06bb739d1a1383"	
+
+                }
+            }
+        },
+        {
+            "Sid": "Deny unencrypted object uploads",
+            "Effect": "Deny",
+            "Principal": {
+                "Service": "guardduty.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::finding-exports-039845098/*",
+            "Condition": {
+                "StringNotEquals": {
+                    "s3:x-amz-server-side-encryption": "aws:kms"
+                }
+            }
+        },
+        {
+            "Sid": "Deny incorrect encryption header",
+            "Effect": "Deny",
+            "Principal": {
+                "Service": "guardduty.amazonaws.com"
+            },
+            "Action": "s3:PutObject",
+            "Resource": "arn:aws:s3:::finding-exports-039845098/*",
+            "Condition": {
+                "StringNotEquals": {
+                "s3:x-amz-server-side-encryption-aws-kms-key-id": "arn:aws:kms:us-east-1:891377138880:key/195dc8da-a6a9-4e7a-8c5c-dea284636c25"
+                }
+            }
+        },
+        {
+            "Sid": "Deny non-HTTPS access",
+            "Effect": "Deny",
+            "Principal": "*",
+            "Action": "s3:*",
+            "Resource": "arn:aws:s3:::finding-exports-039845098/*",
+            "Condition": {
+                "Bool": {
+                    "aws:SecureTransport": "false"
+                }
+            }
+        }
+    ]
+}

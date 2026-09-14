@@ -1,0 +1,12 @@
+version: 0.0
+Resources:
+  - MyLambdaFunction:
+      Type: AWS::Lambda::Function
+      Properties:
+        Name: "process"
+        Alias: "live"
+        CurrentVersion: "1"
+        TargetVersion: "2"
+Hooks:
+  - BeforeAllowTraffic: "SanityCheckLambda"   # Runs integration tests before shifting traffic
+  - AfterAllowTraffic: "PostDeployValidation" # Runs post-traffic checks

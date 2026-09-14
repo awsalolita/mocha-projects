@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  worker
+  namespace: astra
+  labels:
+    app:  worker
+spec:
+  selector:
+    matchLabels:
+      app: worker
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  worker
+    spec:
+      serviceAccountName: worker
+      containers:
+      - name:  worker
+        image: 537275484040.dkr.ecr.us-east-1.amazonaws.com/astra-worker:v1
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        resources:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1
+            memory: 1024Mi
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                curl -f http://localhost:3000/health || exit 1
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                curl -f http://localhost:3000/health || exit 1
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        env:
+        - name: REGISTRY_TABLE_NAME
+          value: titanflow-astra-worker-registry
+        
+        - name: FLOOR_SECRET_NAME
+          value: titanflow-astra-floor-secret
+        
+        - name: REGISTER_INTERVAL_S
+          value: "2"
+        
+        - name: WORKER_ID
+          value: ""
+
+        ports:
+        - containerPort: 3000
+          name:  worker
+
+      restartPolicy: Always

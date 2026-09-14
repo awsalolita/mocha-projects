@@ -1,0 +1,5 @@
+tables:
+  - name: green-tree
+    billingMode: PROVISIONED
+    hashKey: treeId
+    hashKeyType: S

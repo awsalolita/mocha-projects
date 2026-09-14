@@ -1,0 +1,1 @@
+aws deploy create-deployment --application-name my-lambda-app --deployment-group-name my-lambda-dg --s3-location bucket=my-bucket,key=appspec.yaml,bundleType=yaml

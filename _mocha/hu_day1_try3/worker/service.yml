@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: worker
+  namespace: astra
+spec:
+  clusterIP: None
+  selector:
+    app: worker
+  type: ClusterIP
+  ports:
+  - name: worker
+    protocol: TCP
+    port: 8080
+    targetPort: 8080

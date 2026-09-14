@@ -1,0 +1,16 @@
+{{- range .Values.tables }}
+apiVersion: dynamodb.services.k8s.aws/v1alpha1
+kind: Table
+metadata:
+  name: {{ .name }}
+spec:
+  tableName: {{ .name }}
+  billingMode: {{ .billingMode }}
+  attributeDefinitions:
+    - attributeName: {{ .hashKey }}
+      attributeType: {{ .hashKeyType }}
+  keySchema:
+    - attributeName: {{ .hashKey }}
+      keyType: HASH
+---
+{{- end }}

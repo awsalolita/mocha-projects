@@ -1,0 +1,7 @@
+clusterName: titanflow-astra-cluster
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::590183988289:role/titanflow-astra-alb-controller-role
+  create: true
+  name: aws-load-balancer-controller
+vpcId: vpc-064815f67a8813b5c

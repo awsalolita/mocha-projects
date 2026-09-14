@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  router
+  namespace: astra
+  labels:
+    app:  router
+spec:
+  selector:
+    matchLabels:
+      app: router
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  router
+    spec:
+      serviceAccountName: router
+      containers:
+      - name:  router
+        image: 537275484040.dkr.ecr.us-east-1.amazonaws.com/astra-router:v1
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 1
+            memory: 1024Mi
+
+        env:
+        - name: ROUTING_MODE
+          value: "optimized"
+        
+        - name: WORKERS_SERVICE_DNS
+          value: "worker"
+        
+        - name: TRADES_TABLE_NAME
+          value: "titanflow-astra-trades"
+        
+        - name: REDIS_HOST
+          valu: "cache-cluster.sziky2.ng.0001.use1.cache.amazonaws.com:6380"
+        
+        - name: REDIS_PORT
+          value: "6380"
+        
+        - name: POLL_INTERVAL_S
+          value: "2"
+        
+        - name: POLL_TIMEOUT_MS
+          value: "600"
+        
+        - name: STALE_MS
+          value: "8000"
+        
+        - name: HISTORY_FLUSH_S
+          value: "30"
+        ports:
+        - containerPort: 8080
+          name:  router
+          
+      restartPolicy: Always
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: router
+  namespace: astra
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: router
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: /
+    alb.ingress.kubernetes.io/healthcheck-port: "8080"
+    alb.ingress.kubernetes.io/success-codes: "200"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=60
+  name: router
+  namespace: astra
+spec:
+  selector:
+    app: router
+  type: ClusterIP
+  ports:
+  - name: router
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: astra-ing
+  namespace: astra
+  annotations:
+    alb.ingress.kubernetes.io/load-balancer-name: astra-alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "5"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "2"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=60
+    alb.ingress.kubernetes.io/actions.response-403: >
+      {"type":"fixed-response","fixedResponseConfig":{"contentType":"text/plain","statusCode":"403","messageBody":"403 error text"}}
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: router
+            port:
+              number: 8080
+

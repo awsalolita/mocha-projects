@@ -1,0 +1,16 @@
+version: 0.2
+
+env:
+  variables:
+    SOURCE_BUCKET: "sourcecode-9038450"
+    SOURCE_KEY: "frontend.zip"
+    DEST_BUCKET: "frontend-bucket-304985"
+    DISTRIBUTION_ID: "E1MXKHUDXX23MW"
+
+phases:
+  build:
+    commands:
+      - aws s3 cp "s3://$SOURCE_BUCKET/$SOURCE_KEY" frontend.zip
+      - rm -rf site && unzip -o frontend.zip
+      - aws s3 cp site/ "s3://$DEST_BUCKET/" --recursive
+      - aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/index.html" "/gacha.html"

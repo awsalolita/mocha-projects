@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  plant
+  namespace: green-tree
+  labels:
+    app:  plant
+spec:
+  selector:
+    matchLabels:
+      app: plant
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  plant
+    spec:
+      serviceAccountName: plant
+      containers:
+      - name:  plant
+        image: 471208936033.dkr.ecr.ap-northeast-2.amazonaws.com/plant:v1
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 1
+            memory: 1024Mi
+        ports:
+        - containerPort: 8080
+          name:  plant
+          
+      restartPolicy: Always

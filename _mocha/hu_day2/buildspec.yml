@@ -1,0 +1,16 @@
+version: 0.2
+
+env:
+  variables:
+    SOURCE_BUCKET: "front-files-309485"
+    SOURCE_KEY: "console.zip"
+    DEST_BUCKET: "static-files-093485"
+    DISTRIBUTION_ID: "E3O6S43LSUNMSK"
+
+phases:
+  build:
+    commands:
+      - aws s3 cp "s3://$SOURCE_BUCKET/$SOURCE_KEY" console.zip
+      - unzip -o console.zip
+      - aws s3 sync . "s3://$DEST_BUCKET/"
+      - aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"

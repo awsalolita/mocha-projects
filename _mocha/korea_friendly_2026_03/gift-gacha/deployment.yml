@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  gift-gacha
+  namespace: app
+  labels:
+    app:  gift-gacha
+spec:
+  selector:
+    matchLabels:
+      app: gift-gacha
+  strategy:
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  gift-gacha
+    spec:
+      serviceAccountName: gift-gacha
+      containers:
+      - name:  gift-gacha
+        image:  471112953209.dkr.ecr.us-east-1.amazonaws.com/gift-gacha:v1
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "10"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 1
+            memory: 1024Mi
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                curl -f http://localhost:8080/healthz || exit 1
+          initialDelaySeconds: 5
+          timeoutSeconds: 30
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - |
+                curl -f http://localhost:8080/healthz || exit 1
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort: 8080
+          name:  gift-gacha          
+      restartPolicy: Always
